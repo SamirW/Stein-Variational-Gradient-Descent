@@ -35,9 +35,9 @@ class SVGD():
         fudge_factor = 1e-6
         historical_grad = 0
         for iter in range(n_iter):
-            if debug and (iter+1) % 1000 == 0:
-                print('iter %i' % iter+1) 
-            
+            if debug and (iter+1) % 100 == 0:
+                print('iter {}'.format(iter+1)) 
+
             lnpgrad = lnprob(theta)
             # calculating the kernel matrix
             kxy, dxkxy = self.svgd_kernel(theta, h = -1)  
