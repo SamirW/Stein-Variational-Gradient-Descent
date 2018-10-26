@@ -29,12 +29,15 @@ class SVGD():
         if x0 is None or lnprob is None:
             raise ValueError('x0 or lnprob cannot be None!')
         
-        theta = np.copy(x0) 
+        theta = np.copy(x0)
+        theta_hist = np.empty((theta.shape[0], n_iter))
         
         # adagrad with momentum
         fudge_factor = 1e-6
         historical_grad = 0
         for iter in range(n_iter):
+            theta_hist[:, iter] = theta[:,0]
+
             if debug and (iter+1) % 100 == 0:
                 print('iter {}'.format(iter+1)) 
 
@@ -51,5 +54,4 @@ class SVGD():
             adj_grad = np.divide(grad_theta, fudge_factor+np.sqrt(historical_grad))
             theta = theta + stepsize * adj_grad 
             
-        return theta
-    
+        return theta, theta_hist

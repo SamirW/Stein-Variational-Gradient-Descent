@@ -8,7 +8,7 @@ class MVN:
         self.A = A
     
     def dlnprob(self, theta):
-        return -1*np.matmul(theta-nm.repmat(self.mu, theta.shape[0], 1), self.A)
+        return -1*np.matmul(theta-nm.repmat(self.mu, theta.shape[0], 1), np.linalg.inv(self.A))
 
 
 def plot_results(mu, A, theta, bins=20):
@@ -58,16 +58,29 @@ def plot_results(mu, A, theta, bins=20):
 
     plt.show()
 
+def plot_1d(mu, var, theta, bins=20):
+    import matplotlib.pyplot as plt
+    
+    count, bins, _ = plt.hist(theta, bins=bins, density=True)
+    plt.plot(bins, 1/(np.sqrt(var) * np.sqrt(2 * np.pi)) * 
+        np.exp( - (bins - mu)**2 / (2 * np.sqrt(var)**2) ), 
+        linewidth=2, color='r')
+
+    plt.show()
+
 if __name__ == '__main__':
-    A = np.array([[0.2260,0.1652],[0.1652,0.6779]])
-    mu = np.array([-0.6871,2])
+    A = np.array([[2,0],[0,1]])
+    mu = np.array([2,0])
     
     model = MVN(mu, A)
     
     x0 = np.random.normal(0,1, [100,2]);
-    theta = SVGD().update(x0, model.dlnprob, n_iter=100000, stepsize=0.01, debug=True)
+    theta = SVGD().update(x0, model.dlnprob, n_iter=2000, stepsize=0.01, debug=True)
   
-    print("ground truth: ", mu)
-    print("svgd: ", np.mean(theta,axis=0))
+    print("ground truth: mu_1 = {} sigma_1 = {}".format(mu[0], A[0,0]))
+    print("svgd estimate: mu_1 = {} sigma_1 = {}".format(round(np.mean(theta[:,0]),2), round(np.std(theta[:,0])**2,2)))
 
-    plot_results(mu, A, theta, bins=10)
+    # plot_results(mu, A, theta, bins=10)
+
+    plot_1d(mu[0], A[0,0], theta[:,0], bins=20)
+    plot_1d(mu[1], A[1,1], theta[:,1], bins=20)
