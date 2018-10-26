@@ -1,30 +1,34 @@
 import numpy as np
 import numpy.matlib as nm
 import matplotlib.mlab as mlab
-from svgd import SVGD, SVGD_Distill
+from svgd import SVGD
 
-class MVN:
-    def __init__(self, mu, var):
-        self.mu = mu
-        self.var = var
+class Bimodal:
+    def __init__(self, mu1, var1, mu2, var2):
+        self.mu1 = mu1
+        self.var1 = var1
+        self.mu2 = mu2
+        self.var2 = var2
     
     def dlnprob(self, theta):
-        return -1*(theta-self.mu)*(1.0/self.var)
+        return -1/2*(theta-self.mu1)*(1.0/self.var1) + -1/2*(theta-self.mu2)*(1.0/self.var2)
 
-def plot_results(mu1, var1, mu2, var2, theta, bins=15):
+
+def plot_results(mu1, var1, mu2, var2, theta, bins=20):
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
 
     count, bins, _ = plt.hist(theta, bins=bins, density=True)
 
-    x = np.linspace(min(mu1 - 3*np.sqrt(var1), mu2-3*np.sqrt(var2)), max(mu1 + 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2)), 100)
-    plt.plot(x, mlab.normpdf(x, mu1, np.sqrt(var1)))
-    plt.plot(x, mlab.normpdf(x, mu2, np.sqrt(var2)))
+    ax.set_xlim(mu1 - 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2))
+
+    x = np.linspace(mu1 - 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2), 100)
+    plt.plot(x, (mlab.normpdf(x, mu1, np.sqrt(var1)) + mlab.normpdf(x, mu2, np.sqrt(var2)))/2)
 
     plt.show()
 
-def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=15):
+def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=20):
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     import matplotlib.path as path
@@ -68,12 +72,11 @@ def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=15):
         barpath, facecolor='blue', edgecolor='blue', alpha=0.5)
     ax.add_patch(patch)
 
-    ax.set_xlim(min(mu1 - 3*np.sqrt(var1), mu2-3*np.sqrt(var2)), max(mu1 + 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2)))
-    ax.set_ylim(0, 0.5)
+    ax.set_xlim(mu1 - 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2))
+    ax.set_ylim(bottom.min(), 0.5)
 
-    x = np.linspace(min(mu1 - 3*np.sqrt(var1), mu2-3*np.sqrt(var2)), max(mu1 + 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2)), 100)
-    plt.plot(x, mlab.normpdf(x, mu1, np.sqrt(var1)))
-    plt.plot(x, mlab.normpdf(x, mu2, np.sqrt(var2)))
+    x = np.linspace(mu1 - 3*np.sqrt(var1), mu2 + 3*np.sqrt(var2), 100)
+    plt.plot(x, (mlab.normpdf(x, mu1, np.sqrt(var1)) + mlab.normpdf(x, mu2, np.sqrt(var2)))/2)
 
     def animate(i):
         # simulate new data coming in
@@ -108,26 +111,34 @@ def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=15):
             barpath, facecolor='blue', edgecolor='blue', alpha=0.5)
         ax.add_patch(patch)
 
+        # ax.set_xlim(left[0], right[-1])
+        # ax.set_ylim(bottom.min(), top.max())
+
+        # plt.plot(bins, 1/(np.sqrt(var) * np.sqrt(2 * np.pi)) * 
+        # np.exp( - (bins - mu)**2 / (2 * np.sqrt(var)**2) ), 
+        # linewidth=2, color='r')
+
         return [patch, ]
 
     ani = animation.FuncAnimation(fig, animate, int(theta_hist.shape[1]/25), repeat=False, blit=True)
     plt.show()
 
 if __name__ == '__main__':
-    mu1 = -8
-    var1 = 1
+    mu1 = -2
+    var1 = 20
 
-    mu2 = -2
-    var2 = 7
-
-    model1 = MVN(mu1, var1)
-    model2 = MVN(mu2, var2)
+    mu2 = 7
+    var2 = 1
+    
+    model = Bimodal(mu1, var1, mu2, var2)
     
     x0 = np.random.normal(0,1, [100,1])
-    theta, theta_hist = SVGD_Distill().update(x0, model1.dlnprob, model2.dlnprob, n_iter=1000, stepsize=0.01, debug=True)
+    theta, theta_hist = SVGD().update(x0, model.dlnprob, n_iter=2000, stepsize=0.01, debug=True)
     
     # print("ground truth: mu = {} var = {}".format(mu, var))
-    print("svgd: mu = {} var = {}".format(round(np.mean(theta),2), round(np.std(theta)**2,2)))
+    mu = np.mean(theta)
+    var = np.std(theta)**2
+    print("svgd: mu = {} var = {}".format(round(mu,2), round(var,2)))
 
     # plot_results(mu1, var1, mu2, var2, theta)
 
