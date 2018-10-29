@@ -9,7 +9,7 @@ class MVN:
         self.var = var
     
     def dlnprob(self, theta):
-        return -1*(theta-self.mu)*(1.0/self.var)
+        return -1*np.log(np.exp((theta-self.mu)*(1.0/self.var)))
 
 def plot_results(mu, var, theta, bins=20):
     import matplotlib.pyplot as plt
@@ -117,13 +117,13 @@ def animate_results(mu, var, theta_hist, n_bins=20):
     plt.show()
 
 if __name__ == '__main__':
-    var = 2.5
-    mu = 2.5
+    var = 1
+    mu = 0
     
     model = MVN(mu, var)
     
     x0 = np.random.normal(0,1, [150,1])
-    theta, theta_hist = SVGD().update(x0, model.dlnprob, n_iter=1000, stepsize=0.01, debug=True)
+    theta, theta_hist = SVGD().update(x0, model.dlnprob, n_iter=2000, stepsize=0.01, debug=True)
     
     print("ground truth: mu = {} var = {}".format(mu, var))
     print("svgd: mu = {} var = {}".format(round(np.mean(theta),2), round(np.std(theta)**2,2)))

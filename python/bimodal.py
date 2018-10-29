@@ -9,9 +9,16 @@ class Bimodal:
         self.var1 = var1
         self.mu2 = mu2
         self.var2 = var2
+
+    def gaussian(self, x, mu, var):
+        return np.exp(-np.power(x - mu, 2.) / (2 * var))*1./(np.sqrt(2*np.pi*var))
     
     def dlnprob(self, theta):
-        return -1/2*(theta-self.mu1)*(1.0/self.var1) + -1/2*(theta-self.mu2)*(1.0/self.var2)
+        # return -1/2*np.log(np.exp((theta-self.mu1)*(1.0/self.var1)) + \
+            # np.exp((theta-self.mu2)*(1.0/self.var2)))
+        return (-1*(theta-self.mu1)*(1/self.var1)*self.gaussian(theta, self.mu1, self.var1) - \
+                (theta-self.mu2)*(1/self.var2)*self.gaussian(theta, self.mu2, self.var2)) / \
+                (self.gaussian(theta, self.mu1, self.var1) + self.gaussian(theta, self.mu2, self.var2))
 
 
 def plot_results(mu1, var1, mu2, var2, theta, bins=20):
@@ -28,7 +35,7 @@ def plot_results(mu1, var1, mu2, var2, theta, bins=20):
 
     plt.show()
 
-def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=20):
+def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=10):
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     import matplotlib.path as path
@@ -124,16 +131,16 @@ def animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=20):
     plt.show()
 
 if __name__ == '__main__':
-    mu1 = -2
-    var1 = 20
+    mu1 = -4
+    var1 = 0.5
 
-    mu2 = 7
-    var2 = 1
+    mu2 = 2
+    var2 = 4
     
     model = Bimodal(mu1, var1, mu2, var2)
     
-    x0 = np.random.normal(0,1, [100,1])
-    theta, theta_hist = SVGD().update(x0, model.dlnprob, n_iter=2000, stepsize=0.01, debug=True)
+    x0 = np.random.normal(0,1, [200,1])
+    theta, theta_hist = SVGD().update(x0, model.dlnprob, n_iter=3000, stepsize=0.01, debug=True)
     
     # print("ground truth: mu = {} var = {}".format(mu, var))
     mu = np.mean(theta)
@@ -142,4 +149,4 @@ if __name__ == '__main__':
 
     # plot_results(mu1, var1, mu2, var2, theta)
 
-    animate_results(mu1, var1, mu2, var2, theta_hist)
+    animate_results(mu1, var1, mu2, var2, theta_hist, n_bins=30)
